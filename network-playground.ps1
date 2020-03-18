@@ -36,7 +36,15 @@ $NorthNSGRuleSSH = New-AzNetworkSecurityRuleConfig -Name $NorthNSGRuleSSHName -D
 $NorthNSG = New-AzNetworkSecurityGroup -ResourceGroupName North -Location NorthEurope -Name $NorthNSGRuleSSHName -SecurityRules $NorthNSGRuleSSH
 #Create VM config
 $NorthVMNic = New-AzNetworkInterface -Name $($NorthVMName+"Nic") -ResourceGroupName North -Location NorthEurope -SubnetId $NorthVNet.Subnets[0].id -PublicIpAddressId $NorthVMPubIP.Id -NetworkSecurityGroupId $NorthNSG.Id
-
+#Create VM config
+$NorthVMConfig = New-AzVMConfig -VMName $NorthVMName -VMSize "Standard_D1" | 
+Set-AzVMOperatingSystem -Linux -ComputerName $NorthVMName -Credential $cred -DisablePasswordAuthentication | 
+Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
+Add-AzVMNetworkInterface -Id $NorthVMNic.Id
+# Configure the SSH key
+$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
+Add-AzVMSshPublicKey -VM $NorthVMConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
+New-AzVM -ResourceGroupName North -Location NorthEurope -VM $NorthVMConfig
 
 
 
@@ -84,6 +92,6 @@ Set-AzVMOperatingSystem -Linux -ComputerName $WestVMName -Credential $cred -Disa
 Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
 Add-AzVMNetworkInterface -Id $WestVMNic.Id
 # Configure the SSH key
-$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\id_rsa.pub 
-Add-AzVMSshPublicKey -VM $WestvmConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
-New-AzVM -ResourceGroupName West -Location WestEurope -VM $WestvmConfig
+$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
+Add-AzVMSshPublicKey -VM $WestVMConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
+New-AzVM -ResourceGroupName West -Location WestEurope -VM $WestVMConfig
