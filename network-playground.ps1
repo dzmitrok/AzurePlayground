@@ -1,4 +1,7 @@
 ﻿$GWSharedKey = 'Tomato$4'
+$VMlogin = 'dzmitrok'
+$EmptySecurePassword = ConvertTo-SecureString ' ' -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential ($VMlogin, $EmptySecurePassword)
 
 $NorthVMSubnetName = 'NorthVMSubnet'
 $NorthVNetName = 'NorthVNet'
@@ -31,6 +34,7 @@ $NorthNSGRuleSSH = New-AzNetworkSecurityRuleConfig -Name $NorthNSGRuleSSHName -D
 -Protocol Tcp -Direction Inbound  -SourceAddressPrefix * -SourcePortRange * -DestinationPortRange 22  -DestinationAddressPrefix * -Access Allow -Priority 1000
 # Create a network security group
 $NorthNSG = New-AzNetworkSecurityGroup -ResourceGroupName North -Location NorthEurope -Name $NorthNSGRuleSSHName -SecurityRules $NorthNSGRuleSSH
+#Create VM config
 $NorthVMNic = New-AzNetworkInterface -Name $($NorthVMName+"Nic") -ResourceGroupName North -Location NorthEurope -SubnetId $NorthVNet.Subnets[0].id -PublicIpAddressId $NorthVMPubIP.Id -NetworkSecurityGroupId $NorthNSG.Id
 
 
@@ -72,4 +76,14 @@ $WestNSGRuleSSH = New-AzNetworkSecurityRuleConfig -Name $WestNSGRuleSSHName -Des
 -Protocol Tcp -Direction Inbound  -SourceAddressPrefix * -SourcePortRange * -DestinationPortRange 22  -DestinationAddressPrefix * -Access Allow -Priority 1000
 # Create a network security group
 $WestNSG = New-AzNetworkSecurityGroup -ResourceGroupName West -Location WestEurope -Name $WestNSGRuleSSHName -SecurityRules $WestNSGRuleSSH
+#create VM Network interface
 $WestVMNic = New-AzNetworkInterface -Name $($WestVMName+"Nic") -ResourceGroupName West -Location WestEurope -SubnetId $WestVNet.Subnets[0].id -PublicIpAddressId $WestVMPubIP.Id -NetworkSecurityGroupId $WestNSG.Id
+#Create VM config
+$WestvmConfig = New-AzVMConfig -VMName $WestVMName -VMSize "Standard_D1" | 
+Set-AzVMOperatingSystem -Linux -ComputerName $WestVMName -Credential $cred -DisablePasswordAuthentication | 
+Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
+Add-AzVMNetworkInterface -Id $WestVMNic.Id
+# Configure the SSH key
+$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\id_rsa.pub 
+Add-AzVMSshPublicKey -VM $WestvmConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
+New-AzVM -ResourceGroupName West -Location WestEurope -VM $WestvmConfig
