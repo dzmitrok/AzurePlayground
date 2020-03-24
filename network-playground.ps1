@@ -2,16 +2,25 @@
 $VMlogin = 'dzmitrok'
 $EmptySecurePassword = ConvertTo-SecureString ' ' -AsPlainText -Force
 $cred = New-Object System.Management.Automation.PSCredential ($VMlogin, $EmptySecurePassword)
+$UpdateDomainsNumber = 2
+$FaultDomainsNumber = 2
 
 $NorthVMSubnetName = 'NorthVMSubnet'
 $NorthVNetName = 'NorthVNet'
 $NorthGWPubIPName = 'North_GW_Public_IP'
 $NorthVMPubIPName = 'North_VM_Public_IP'
+$NorthLBPubIPName = 'North_LB_Public_IP'
 $NorthGWConfigName = 'NorthGWConfig'
 $NorthGWName = 'NorthGW'
 $NorthGWConnectionName = 'NorthToWest'
 $NorthNSGRuleSSHName = 'NorthNSGRuleSSH'
 $NorthVMName = 'NorthVM'
+$NorthASName = 'NorhAS'
+$NorthLBName = 'NorhLB'
+$NorthLBAddressPoolName = 'NorthLBPool'
+$NorthLBProbeName = 'NorthLBProbe'
+$NorthLBIRuleName = 'NorthLBIRuleName'
+$NorthLBInboundNATRuleName = 'NorthLBInboundNATRuleName'
 #Create VM VNet  Config
 $NorthVMSubnet = New-AzVirtualNetworkSubnetConfig -Name $NorthVMSubnetName -AddressPrefix 10.10.10.0/26
 #Create VNet Gateway Config
@@ -42,11 +51,28 @@ Set-AzVMOperatingSystem -Linux -ComputerName $NorthVMName -Credential $cred -Dis
 Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
 Add-AzVMNetworkInterface -Id $NorthVMNic.Id
 # Configure the SSH key
-$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
+$sshPublicKey = get-content D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
 Add-AzVMSshPublicKey -VM $NorthVMConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
 New-AzVM -ResourceGroupName North -Location NorthEurope -VM $NorthVMConfig
-
-
+$NorthAS = New-AzAvailabilitySet -ResourceGroupName North -Name $NorthASname -Location NorthEurope -Sku Aligned -PlatformUpdateDomainCount $UpdateDomainsNumber -PlatformFaultDomainCount $FaultDomainsNumber
+for ($i=1; $i -le 2; $i++)
+{
+    $NorthVMNic = New-AzNetworkInterface -Name $($NorthASName+$NorthVMName+$i+"Nic") -ResourceGroupName North -Location NorthEurope -SubnetId $NorthVNet.Subnets[1].id -NetworkSecurityGroupId $NorthNSG.Id
+    $NorthASConfig = New-AzVMConfig -VMName $($NorthASName+$NorthVMName+$i) -VMSize "Standard_D1" -AvailabilitySetId $NorthAS.id |
+    Set-AzVMOperatingSystem -Linux -ComputerName $($NorthASName+$NorthVMName+$i) -Credential $cred -DisablePasswordAuthentication |
+    Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
+    Add-AzVMNetworkInterface -Id $NorthVMNic.Id
+    Add-AzVMSshPublicKey -VM $NorthASConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
+    New-AzVM -ResourceGroupName North -Location NorthEurope -VM $NorthASConfig
+}
+# Create Load balancer public IP address 
+$NorthLBPubIP = New-AzPublicIpAddress -Name $NorthLBPubIPName -ResourceGroupName North -Location NorthEurope -AllocationMethod Dynamic
+$NorthLBConfig = New-AzLoadBalancerFrontendIpConfig -Name $NorthLBName -PublicIpAddress $NorthLBPubIP
+$NorthLBAddressPool = New-AzLoadBalancerBackendAddressPoolConfig -Name $NorthLBAddressPoolName
+$NorthLBProbe = New-AzLoadBalancerProbeConfig -Name $NorthLBProbeName -Protocol "http" -Port 80 -IntervalInSeconds 15 -ProbeCount 2 -RequestPath /
+$NorthLBinboundNatRule = New-AzLoadBalancerInboundNatRuleConfig -Name $NorthLBInboundNATRuleName -FrontendIPConfiguration $NorthLBConfig -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP
+$NorthLBrule = New-AzLoadBalancerRuleConfig -Name $NorthLBIRuleName -FrontendIPConfiguration $NorthLBConfig -BackendAddressPool $NorthLBAddressPool -Probe $NorthLBProbe -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP -LoadDistribution SourceIP
+New-AzLoadBalancer -Name $NorthLBName  -ResourceGroupName North -Location NorthEurope -FrontendIpConfiguration $NorthLBConfig -BackendAddressPool $NorthLBAddressPool -Probe $NorthLBProbe -InboundNatRule $NorthLBinboundNatRule  -LoadBalancingRule $NorthLBrule
 
 
 $WestVMSubnetName = 'WestVMSubnet'
