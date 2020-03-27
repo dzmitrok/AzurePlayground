@@ -118,6 +118,6 @@ Set-AzVMOperatingSystem -Linux -ComputerName $WestVMName -Credential $cred -Disa
 Set-AzVMSourceImage -PublisherName Debian -Offer Debian-11-daily -Skus 11 -Version "latest" |
 Add-AzVMNetworkInterface -Id $WestVMNic.Id
 # Configure the SSH key
-$sshPublicKey = cat D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
+$sshPublicKey = get-content D:\SkyDrive\Azure\xvazusa0000\xvazusa0000.pub
 Add-AzVMSshPublicKey -VM $WestVMConfig -KeyData $sshPublicKey -Path "/home/$VMlogin/.ssh/authorized_keys"
 New-AzVM -ResourceGroupName West -Location WestEurope -VM $WestVMConfig
