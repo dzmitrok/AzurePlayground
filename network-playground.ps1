@@ -73,6 +73,7 @@ $NorthLBProbe = New-AzLoadBalancerProbeConfig -Name $NorthLBProbeName -Protocol 
 $NorthLBinboundNatRule = New-AzLoadBalancerInboundNatRuleConfig -Name $NorthLBInboundNATRuleName -FrontendIPConfiguration $NorthLBConfig -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP
 $NorthLBrule = New-AzLoadBalancerRuleConfig -Name $NorthLBIRuleName -FrontendIPConfiguration $NorthLBConfig -BackendAddressPool $NorthLBAddressPool -Probe $NorthLBProbe -Protocol "Tcp" -FrontendPort 80 -BackendPort 80 -IdleTimeoutInMinutes 15 -EnableFloatingIP -LoadDistribution SourceIP
 New-AzLoadBalancer -Name $NorthLBName  -ResourceGroupName North -Location NorthEurope -FrontendIpConfiguration $NorthLBConfig -BackendAddressPool $NorthLBAddressPool -Probe $NorthLBProbe -InboundNatRule $NorthLBinboundNatRule  -LoadBalancingRule $NorthLBrule
+#Configure Availablity set
 
 
 $WestVMSubnetName = 'WestVMSubnet'
