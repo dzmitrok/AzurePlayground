@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "NetworkAddressPrefix":{
+          "type": "array"
+        }
+    },
+    "variables": {
+      "VirtualNetworkName":"[concat('Vnet_in_',resourceGroup().name,'_in_',resourceGroup().location)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-12-01",
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('NetworkAddressPrefix')]"
+                },
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        }
+    ]
+}
