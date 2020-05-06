@@ -1,9 +1,20 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "NetworkAddressPrefix":{
           "type": "array"
+        },
+        "SubnetName":{
+          "type":"array",
+          "defaultValue": [
+            "GW",
+            "VM",
+            "LB"
+          ]
+        },
+        "SubnetAddressPrefix":{
+          "type": "array" 
         }
     },
     "variables": {
@@ -22,6 +33,25 @@
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('SubnetName')[copyIndex()])]",
+            "dependsOn": [
+                "[variables('VirtualNetworkName')]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('SubnetAddressPrefix')]",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled",
+                "copy": {
+                        "name": "subnet",
+                        "count": "[length(parameters('SubnetName'))]"
+                        }
             }
         }
     ]

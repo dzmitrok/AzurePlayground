@@ -3,7 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
       "NetworkAddressPrefix": {
-          "value": ["10.10.10.128/25"]
+          "value": ["10.11.10.128/25"]
+      },
+      "SubnetAddressPrefix": {
+          "value": ["10.11.10.64/26","10.11.10.128/26","10.11.10.192/26"]
       }
   }
 }
