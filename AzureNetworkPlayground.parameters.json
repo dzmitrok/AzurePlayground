@@ -9,7 +9,10 @@
            "value": "10.11.10.128/26"
       },
       "SubnetName": {
-           "value": "GW"
-    }
+           "value": "VMs"
+      },
+      "GatewayAddressPrefix": {
+           "value": "10.11.10.192/26"
+      }
   }
 }

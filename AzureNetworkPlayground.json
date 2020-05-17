@@ -10,6 +10,9 @@
         },
         "SubnetAddressPrefix":{
            "type": "string"
+        },
+        "GatewayAddressPrefix": {
+            "type": "string"
         }
     },
     "variables": {
@@ -40,6 +43,18 @@
                 ],
             "properties": {
                 "addressPrefix": "[parameters('SubnetAddressPrefix')]"
+                          }
+            },
+            {
+            "apiVersion": "2019-12-01",
+            "name": "GatewaySubnet",
+            "type": "subnets",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+                ],
+            "properties": {
+                "addressPrefix": "[parameters('GatewayAddressPrefix')]"
                           }
             }
             ]
