@@ -6,15 +6,10 @@
           "type": "array"
         },
         "SubnetName":{
-          "type":"array",
-          "defaultValue": [
-            "GW",
-            "VM",
-            "LB"
-          ]
+          "type":"string"
         },
         "SubnetAddressPrefix":{
-          "type": "array" 
+           "type": "string"
         }
     },
     "variables": {
@@ -33,26 +28,22 @@
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks/subnets",
+            },
+            "resources": [
+            {
             "apiVersion": "2019-12-01",
-            "name": "[concat(parameters('SubnetName')[copyIndex()])]",
+            "name": "[parameters('SubnetName')]",
+            "type": "subnets",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[variables('VirtualNetworkName')]"
-            ],
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+                ],
             "properties": {
-                "addressPrefix": "[parameters('SubnetAddressPrefix')]",
-                "serviceEndpoints": [],
-                "delegations": [],
-                "privateEndpointNetworkPolicies": "Enabled",
-                "privateLinkServiceNetworkPolicies": "Enabled",
-                "copy": {
-                        "name": "subnet",
-                        "count": "[length(parameters('SubnetName'))]"
-                        }
+                "addressPrefix": "[parameters('SubnetAddressPrefix')]"
+                          }
             }
+            ]
         }
-    ]
+    ],
+    "outputs": {}
 }
