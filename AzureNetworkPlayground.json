@@ -11,7 +11,13 @@
         "SubnetAddressPrefix":{
            "type": "string"
         },
-        "GatewayAddressPrefix": {
+        "GatewaySubnetAddressPrefix": {
+            "type": "string"
+        },
+        "PubIP": {
+            "type": "string"
+        },
+        "GWName": {
             "type": "string"
         }
     },
@@ -54,7 +60,58 @@
                 "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
                 ],
             "properties": {
-                "addressPrefix": "[parameters('GatewayAddressPrefix')]"
+                "addressPrefix": "[parameters('GatewaySubnetAddressPrefix')]"
+                          }
+            },
+            {
+            "name": "[parameters('PubIP')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+                ],
+            "sku": {
+                    "name": "basic"
+                    },
+            "properties": {
+                    "publicIPAddressVersion": "IPv4",
+                    "publicIPAllocationMethod": "Dynamic",
+                    "idleTimeoutInMinutes": 4,
+                    "ipTags": []
+                     }
+            },
+            {
+            "name": "[parameters('GWName')]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+                ],
+            "properties": {
+                    "ipConfigurations": [
+                             {
+                        "name": "[concat(parameters('GWName'), 'Config')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "/subscriptions/9fcc5101-e1ec-4783-9c73-7d2c11cec713/resourceGroups/Shablon/providers/Microsoft.Network/publicIPAddresses/ShablonPubIP"
+                            },
+                            "subnet": {
+                                "id": "/subscriptions/9fcc5101-e1ec-4783-9c73-7d2c11cec713/resourceGroups/Shablon/providers/Microsoft.Network/virtualNetworks/Vnet_in_Shablon_in_westeurope/subnets/GatewaySubnet"
+                                      }
+                                      }
+                             }
+                        ],
+                        "gatewayType": "vpn",
+                        "vpnType": "RouteBased",
+                        "enableBgp": false,
+                        "activeActive": false,
+                        "sku": {
+                            "name": "Basic",
+                            "tier": "Basic"
+                        }
                           }
             }
             ]

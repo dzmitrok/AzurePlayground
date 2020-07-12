@@ -11,8 +11,14 @@
       "SubnetName": {
            "value": "VMs"
       },
-      "GatewayAddressPrefix": {
+      "GatewaySubnetAddressPrefix": {
            "value": "10.11.10.192/26"
+      },
+      "PubIP": {
+           "value": "ShablonPubIP"
+      },
+      "GWName": {
+           "value": "ShabonGW"
       }
   }
 }
